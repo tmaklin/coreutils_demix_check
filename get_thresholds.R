@@ -1,6 +1,5 @@
 
 dis <- read.table("ref_msh_dis_clu.tsv", sep='\t', header=TRUE, comment.char='@')
-dis <- dis[dis$ref_id != dis$met_id, ]
 
 between_dis <- dis[dis$ref_cluster != dis$met_cluster, ]
 within_dis <- dis[dis$ref_cluster == dis$met_cluster, ]

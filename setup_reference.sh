@@ -32,6 +32,7 @@ sort ref_info.tsv > ref_info.sorted.tsv
 
 echo -e "ref_id\tmet_id\tdistance\thashes\tss\tp\tref_cluster\tmet_cluster\tcategory" > ref_msh_dis_clu.tsv
 zcat --force ref_msh_dis.tsv.gz \
+    | awk -F"[\t]" '$1!=$2 { print $0 }' \
     | sort -k1 \
     | join -1 1 -2 3 - ref_info.sorted.tsv \
     | tr ' ' '\t' | sort -k2 \
