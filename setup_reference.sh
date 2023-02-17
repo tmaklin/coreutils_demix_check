@@ -4,6 +4,15 @@
 
 ##set -euxo pipefail
 
+run_seqtk() {
+    line=$1
+    id=$(echo $line | cut -f1,2 -d' ');
+    path=$(echo $line | cut -f3 -d' ');
+    res=$(seqtk comp $path | cut -f2-13 | awk -F "[[:space:]]" '{{for(i=1;i<=NF;i++)$i=(a[i]+=$i)}}END{{print}}');
+    echo $id' '$res | tr ' ' '\t';
+}
+export -f run_seqtk
+
 paths=ref_paths.txt
 cut -f3 $1 | sed '1d' > $paths
 mash sketch -p $2 -s 10000 -o ref -l $paths 2> /dev/null
@@ -14,14 +23,10 @@ touch ref_clu.txt
 touch ref_clu.tsv
 echo -e "chr\tcluster\tlength\t#A\t#C\t#G\t#T\t#2\t#3\t#4\t#CpG\t#tv\t#ts\t#CpG-ts" > ref_comp.tsv
 echo -e "id\tcluster" > ref_clu.tsv
-while read line; do
-    id=$(echo $line | cut -f1,2 -d' ')
-    path=$(echo $line | cut -f3 -d' ')
-    res=$(seqtk comp $path | cut -f2-13 | awk -F "[[:space:]]" '{{for(i=1;i<=NF;i++)$i=(a[i]+=$i)}}END{{print}}')
-    echo $id' '$res | tr ' ' '\t'
-    echo $id | cut -f2 -d' ' >> ref_clu.txt
-    echo $id | tr ' ' '\t' >> ref_clu.tsv
-done < <(sed '1d' $1) >> ref_comp.tsv
+cut -f1,2 ref_info.tsv >> ref_clu.tsv
+cut -f2 ref_info.tsv | sed '1d' > ref_clu.txt
+
+parallel -j $2 'run_seqtk {}' < <(sed '1d' ref_info.tsv) >> ref_comp.tsv 2> /dev/null
 
 touch ref_clu_comp.tsv
 echo -e "cluster\tn\tlength_ave\tlength_min\tlength_max" > ref_clu_comp.tsv
