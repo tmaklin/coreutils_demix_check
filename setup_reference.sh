@@ -44,6 +44,34 @@ zcat --force ref_msh_dis.tsv.gz \
     | tr -d ' ' \
     | sed 's/_cluster/ cluster/g' >> ref_msh_dis_clu.tsv
 
-Rscript get_thresholds.R
+
+cat ref_msh_dis_clu.tsv | sed '1d' \
+    | awk -F"[\t]" '$7==$8 { print $0 }' \
+    | datamash --sort --group 7 median 3 min 3 max 3 > within_dis.tsv
+
+cat ref_msh_dis_clu.tsv | sed '1d' \
+    | awk -F"[\t]" '$7!=$8 { print $0 }' \
+    | datamash --sort --group 7 median 3 min 3 max 3\
+    | join -a 1 -o 1.1,1.2,1.3,1.4,2.2,2.3,2.4 -e 0 - within_dis.tsv | tr ' ' '\t' | sort -k1 \
+    | awk -v SF="0.20" '{printf($1"\t"$2"\t"$3"\t"$4"\t"$5"\t"$6"\t"$7"\t"$7*(1 + SF))"\n" }' > tmp_clu_thr.tsv
+
+t_min=$(cut -f2 tmp_clu_thr.tsv | awk -v SF="0.20" '{printf($1*SF)"\n" }' | datamash --sort median 1)
+t_med=$(cut -f8 tmp_clu_thr.tsv | grep -v "^0$" | datamash --sort median 1)
+if (( $(echo "$t_med < $t_min" | bc -l) )); then
+    t_comp=$t_min
+else
+    t_comp=$t_med
+fi
+
+echo -e "cluster\tn\tthreshold\tdis_same_max\tdis_same_med_all\tdis_diff_med_all" > ref_clu_thr.tsv
+cat tmp_clu_thr.tsv \
+    | paste - <(cut -f8 tmp_clu_thr.tsv | awk -v SF="$t_comp" '{print ($1 < SF ? SF:$1) }') \
+    | awk '{ print $1 "\t" $9 "\t" $7}' \
+    | paste - <(same_med_all=$(cut -f5 tmp_clu_thr.tsv | grep -v "^0$" | datamash --sort median 1); yes "$same_med_all" | head -n $(wc -l tmp_clu_thr.tsv | cut -f1 -d' ')) <(diff_med_all=$(cut -f2 tmp_clu_thr.tsv | grep -v "^0$" | datamash --sort median 1); yes "$diff_med_all" | head -n $(wc -l tmp_clu_thr.tsv | cut -f1 -d' ')) \
+    | join -1 1 -2 1 ref_clu_comp.tsv - \
+    | tr ' ' '\t' \
+    | cut -f1,2,6-9 >> ref_clu_thr.tsv
+
+rm tmp_clu_thr.tsv
 
 pigz --force -11 -p $2 ref_msh_dis_clu.tsv
