@@ -7,7 +7,7 @@
 paths=ref_paths.txt
 cut -f3 $1 | sed '1d' > $paths
 mash sketch -p $2 -s 10000 -o ref -l $paths 2> /dev/null
-mash dist -p $2 ref.msh ref.msh | pigz -11 -p $2 > ref_msh_dis.tsv.gz
+mash dist -p $2 ref.msh ref.msh | pigz -p $2 > ref_msh_dis.tsv.gz
 
 touch ref_comp.tsv
 touch ref_clu.txt
@@ -74,4 +74,4 @@ cat tmp_clu_thr.tsv \
 
 rm tmp_clu_thr.tsv
 
-pigz --force -11 -p $2 ref_msh_dis_clu.tsv
+pigz --force -p $2 ref_msh_dis_clu.tsv
