@@ -38,14 +38,14 @@ echo -e "cluster\tn\tlength_ave\tlength_min\tlength_max" > ref_clu_comp.tsv
 sed '1d' ref_comp.tsv | datamash --sort --group 2 count 2 mean 3 min 3 max 3 >> ref_clu_comp.tsv
 
 ## Sort the ref info for `join`
-sort -T $tmpdir ref_info.tsv > ref_info.sorted.tsv
+sort --parallel=$2 -T $tmpdir ref_info.tsv > ref_info.sorted.tsv
 
 echo -e "ref_id\tmet_id\tdistance\thashes\tss\tp\tref_cluster\tmet_cluster\tcategory" > ref_msh_dis_clu.tsv
 zcat --force ref_msh_dis.tsv.gz \
     | awk -F"[\t]" '$1!=$2 { print $0 }' \
-    | sort -T $tmpdir -k1 \
+    | sort --parallel=$2 -T $tmpdir -k1 \
     | join -1 1 -2 3 - ref_info.sorted.tsv \
-    | tr ' ' '\t' | sort -T $tmpdir -k2 \
+    | tr ' ' '\t' | sort --parallel=$2 -T $tmpdir -k2 \
     | join -1 2 -2 3 - ref_info.sorted.tsv \
     | tr ' ' '\t' \
     | sed 's/\([0-9][0-9]*\)[/]\([0-9][0-9]*\)/\1\t\2/g' \
@@ -65,7 +65,7 @@ tmp_thr=$tmpdir/tmp_clu_thr-$RANDOM".tsv"
 cat ref_msh_dis_clu.tsv | sed '1d' \
     | awk -F"[\t]" '$7!=$8 { print $0 }' \
     | datamash --sort --group 7 median 3 min 3 max 3\
-    | join -a 1 -o 1.1,1.2,1.3,1.4,2.2,2.3,2.4 -e 0 - $within_dis | tr ' ' '\t' | sort -T $tmpdir -k1 \
+    | join -a 1 -o 1.1,1.2,1.3,1.4,2.2,2.3,2.4 -e 0 - $within_dis | tr ' ' '\t' | sort --parallel=$2 -T $tmpdir -k1 \
     | awk -v SF="0.20" '{printf($1"\t"$2"\t"$3"\t"$4"\t"$5"\t"$6"\t"$7"\t"$7*(1 + SF))"\n" }' > $tmp_thr
 
 t_min=$(cut -f2 $tmp_thr | awk -v SF="0.20" '{printf($1*SF)"\n" }' | datamash --sort median 1)
@@ -77,7 +77,7 @@ else
 fi
 
 sorted_clu_comp=$tmpdir/sorted_clu_comp.tsv
-sed '1d' ref_clu_comp.tsv | sort -T $tmpdir > $sorted_clu_comp
+sed '1d' ref_clu_comp.tsv | sort --parallel=$2 -T $tmpdir > $sorted_clu_comp
 echo -e "cluster\tn\tthreshold\tdis_same_max\tdis_same_med_all\tdis_diff_med_all" > ref_clu_thr.tsv
 cat $tmp_thr \
     | paste - <(cut -f8 $tmp_thr | awk -v SF="$t_comp" '{print ($1 < SF ? SF:$1) }') \
