@@ -7,6 +7,7 @@
 set -euxo pipefail
 
 export LC_ALL=C
+export TMPDIR=$3
 
 tmpdir=$3
 
