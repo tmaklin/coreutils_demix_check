@@ -76,15 +76,18 @@ else
     t_comp=$t_med
 fi
 
+sorted_clu_comp=$tmpdir/sorted_clu_comp.tsv
+sed '1d' ref_clu_comp.tsv | sort -T $tmpdir > $sorted_clu_comp
 echo -e "cluster\tn\tthreshold\tdis_same_max\tdis_same_med_all\tdis_diff_med_all" > ref_clu_thr.tsv
 cat $tmp_thr \
     | paste - <(cut -f8 $tmp_thr | awk -v SF="$t_comp" '{print ($1 < SF ? SF:$1) }') \
     | awk '{ print $1 "\t" $9 "\t" $7}' \
     | paste - <(same_med_all=$(cut -f5 $tmp_thr | grep -v "^0$" | datamash --sort median 1); yes "$same_med_all" | head -n $(wc -l $tmp_thr | cut -f1 -d' ')) <(diff_med_all=$(cut -f2 $tmp_thr | grep -v "^0$" | datamash --sort median 1); yes "$diff_med_all" | head -n $(wc -l $tmp_thr | cut -f1 -d' ')) \
-    | join -1 1 -2 1 ref_clu_comp.tsv - \
+    | join -1 1 -2 1 $sorted_clu_comp - \
     | tr ' ' '\t' \
     | cut -f1,2,6-9 >> ref_clu_thr.tsv
 
+rm $sorted_clu_comp
 rm $tmp_thr
 
 pigz --force -p $2 ref_msh_dis_clu.tsv
