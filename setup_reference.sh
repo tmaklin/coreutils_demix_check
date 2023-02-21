@@ -30,17 +30,17 @@ touch ref_clu.txt
 touch ref_clu.tsv
 echo -e "chr\tcluster\tlength\t#A\t#C\t#G\t#T\t#2\t#3\t#4\t#CpG\t#tv\t#ts\t#CpG-ts" > ref_comp.tsv
 echo -e "id\tcluster" > ref_clu.tsv
-cut -f1,2 ref_info.tsv >> ref_clu.tsv
-cut -f2 ref_info.tsv | sed '1d' > ref_clu.txt
+cut -f1,2 $1 >> ref_clu.tsv
+cut -f2 $1 | sed '1d' > ref_clu.txt
 
-parallel -j $2 'run_seqtk {}' < <(sed '1d' ref_info.tsv) >> ref_comp.tsv 2> /dev/null
+parallel --will-cite -j $2 'run_seqtk {}' < <(sed '1d' $1) >> ref_comp.tsv
 
 touch ref_clu_comp.tsv
 echo -e "cluster\tn\tlength_ave\tlength_min\tlength_max" > ref_clu_comp.tsv
 sed '1d' ref_comp.tsv | datamash --sort --group 2 count 2 mean 3 min 3 max 3 >> ref_clu_comp.tsv
 
 ## Sort the ref info for `join`
-sort --parallel=$2 -S $4 -T $tmpdir ref_info.tsv > ref_info.sorted.tsv
+sed '1d' $1 | sort --parallel=$2 -S $4 -T $tmpdir > ref_info.sorted.tsv
 
 echo -e "ref_id\tmet_id\tdistance\thashes\tss\tp\tref_cluster\tmet_cluster\tcategory" > ref_msh_dis_clu.tsv
 zcat --force ref_msh_dis.tsv.gz \
