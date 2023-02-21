@@ -21,7 +21,7 @@ fwd=$6
 rev=$7
 
 cluster=$(echo $fwd | sed 's/_1[.]fastq[.]gz//g')
-abundance=$(grep $cluster $abun_in | cut -f2)
+abundance=$(grep "$cluster[[:space:]]" $abun_in | cut -f2)
 
 seqtk_res=$(seqtk fqchk $fwd)
 
@@ -32,7 +32,7 @@ read_len=$(echo $(echo $seqtk_res | grep -o "avg_len:[[:space:]][0-9]*" | grep -
 read_file_lines=$(zcat --force $fwd | wc -l)
 read_count=$(( read_file_lines/4 ))
 
-cluster_avg_len=$(grep "$cluster" $refdir/ref_clu_comp.tsv | cut -f3)
+cluster_avg_len=$(grep "$cluster[[:space:]]" $refdir/ref_clu_comp.tsv | cut -f3)
 coverage=$(printf %.2f $(echo "$total_bases/$cluster_avg_len" | bc -l))
 coverage_final=$coverage
 
@@ -52,26 +52,30 @@ if (( $(echo "$coverage > 100" | bc -l) )); then
 elif (( $(echo "$coverage < 10" | bc -l) )); then
     notes="Warning: low coverage ($coverage) so distances may not be accurate"
     subsampled=0
-
-    r1=$fwd
-    r2=$rev
+else
+    subsampled=0
+    notes=""
 fi
+r1=$fwd
+r2=$rev
 
 m=$(printf %.0f $(echo "$coverage_final/10 + 2" | bc -l))
 
 clu_sketch=$tmpdir/$cluster".msh"
 mash sketch -p $nthreads -s 10000 -r -m $m -I $cluster -C - -o $clu_sketch $r1 $r2 2> /dev/null
 
+sorted_ref_info=$tmpdir/ref_info-$RANDOM".sorted.tsv"
+sed '1d' $refdir/ref_info.tsv | sort -T $tmpdir -S $bufsize --parallel=$nthreads > $sorted_ref_info
 dist_res=$(mash dist -p $nthreads $refdir/ref.msh $clu_sketch \
 	       | sort -T $tmpdir -S $bufsize --parallel=$nthreads \
-	       | join -1 1 -2 3 - $refdir/ref_info.sorted.tsv \
+	       | join -1 1 -2 3 - $sorted_ref_info \
 	       | grep "$cluster$" \
 	       | datamash min 3 median 3 -t ' ')
 
 mindis=$(echo $dist_res | cut -f1 -d' ')
 meddis=$(echo $dist_res | cut -f2 -d' ')
 
-clu_info=$(grep $cluster $refdir"/ref_clu_thr.tsv")
+clu_info=$(grep "$cluster[[:space:]]" $refdir"/ref_clu_thr.tsv")
 clu_thr=$(echo $clu_info | cut -f3 -d ' ')
 clu_dis_same_max=$(echo $clu_info | cut -f4 -d' ')
 clu_dis_same_med_all=$(echo $clu_info | cut -f5 -d' ')
@@ -98,3 +102,4 @@ if (( $(echo "$subsampled" | bc -l) )); then
 fi
 
 rm $clu_sketch
+rm $sorted_ref_info
