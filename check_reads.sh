@@ -77,6 +77,12 @@ if [ "$verbose" == "true" ]; then
     set -x
 fi
 
+if command -v pigz > /dev/null; then
+    compress_cmd="pigz -p $threads"
+else
+    compress_cmd="gzip"
+fi
+
 export LC_ALL=C
 export TMPDIR=$3
 
@@ -105,9 +111,9 @@ if (( $(echo "$coverage > 100" | bc -l) )); then
     r1=$tmpdir/$cluster"_subsampled_1.fastq.gz"
     r2=$tmpdir/$cluster"_subsampled_2.fastq.gz"
 
-    sub_read_count=$(( read_count/(coverage/100) ))
-    seqtk sample -s 11 $fwd $sub_read_count | pigz -p $nthreads > $r1
-    seqtk sample -s 11 $rev $sub_read_count | pigz -p $nthreads > $r2
+    sub_read_count=$( echo "$read_count/($coverage/100)" | bc -l | sed 's/[.][0-9]*$//g')
+    seqtk sample -s 11 $fwd $sub_read_count | $compress_cmd > $r1
+    seqtk sample -s 11 $rev $sub_read_count | $compress_cmd > $r2
 
     subsampled=1
     coverage_final=100
