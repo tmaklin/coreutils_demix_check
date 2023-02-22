@@ -7,9 +7,19 @@ set up the demix\_check reference and check reads binned with
 or R dependencies in the original.
 
 ## Dependencies
+Version numbers are for versions that have been tested. Older or newer
+versions should also work.
+
 - seqtk v1.3
 - mash v2.3
-- GNU datamash
+- datamash v1.8
+
+Run the supplied `install.sh` script to install all of these from
+source (requires a C compiler). After running the script, you will
+need to export the paths to these tools before running the scripts by running
+```
+export PATH=$PATH:$(pwd)"/"datamash-1.8:$(pwd)"/"seqtk-1.3:$(pwd)"/"mash-Linux64-v2.3
+```
 
 ## Usage
 ### Set up a set of reference sequences
