@@ -1,26 +1,89 @@
 #!/bin/bash
-## Input: $1: abundances file from mSWEEP
-##        $2: number of threads
-##        $3: tmp directory
-##        $4: buffer size for `sort`
-##        $5: demix_check index folder
-##        $6: forward strand
-##        $7: reverse strand
+## Input:
+##        --abundances: abundances file from mSWEEP   (required)
+##        --cluster: which cluster to check           (required)
+##        --reference: output from setup_reference.sh (required)
+##        --fwd: forward reads from mGEMS             (required)
+##        --rev: reverse reads from mGEMS             (required)
+##        --threads: number of threads                (default: 1)
+##        --tmpdir: tmp directory                     (default: working directory)
+##        --bufsize: buffer size for `sort`           (default: 4000M)
+##        --verbose: echo commands run                (default: silent)
+##        --help: print this message
 
-##set -euxo pipefail
+set -euo pipefail
+
+arg_parser() {
+    ## Default values
+    abundances=""   ## Exit if not supplied
+    cluster=""
+    reference=""
+    fwd=""
+    rev=""
+    threads=1     ## 1 thread
+    bufsize=4000"M"  ## 4000MB
+    tmpdir="."    ## Working directory
+    verbose=false ## Silent
+
+    # Parse values
+    while [ $# -gt 0 ]; do
+        if [[ $1 == *"--"* ]]; then
+	    if [ "$1" == "--verbose" ]; then
+		verbose="true"
+	    elif [ "$1" == "--help" ]; then
+		echo -e "check_reads.sh:\n\t--abundances: abundances file from mSWEEP   (required)\n\t--cluster: which cluster to check           (required)\n\t--reference: output from setup_reference.sh (required)\n\t--fwd: forward reads from mGEMS             (required)\n\t--rev: reverse reads from mGEMS             (required)\n\t--threads: number of threads                (default: 1)\n\t--tmpdir: tmp directory                     (default: working directory)\n\t--bufsize: buffer size for sort             (default: 4000M)\n\t--verbose: echo commands run                (default: silent)\n\t--help: print this message"
+		exit 0
+	    else
+		param="${1/--/}"
+		declare -g $param="$2"
+	    fi
+        fi
+        shift
+    done
+
+    if [ "$abundances" == "" ]; then
+	echo "--abundances was not supplied!"
+	exit 1
+    fi
+
+
+    if [ "$cluster" == "" ]; then
+	echo "--cluster was not supplied!"
+	exit 1
+    fi
+
+
+    if [ "$reference" == "" ]; then
+	echo "--reference was not supplied!"
+	exit 1
+    fi
+
+
+    if [ "$fwd" == "" ]; then
+	echo "--fwd was not supplied!"
+	exit 1
+    fi
+
+
+    if [ "$rev" == "" ]; then
+	echo "--rev was not supplied!"
+	exit 1
+    fi
+}
+
+arg_parser $@
+
+if [ "$verbose" == "true" ]; then
+    set -x
+fi
 
 export LC_ALL=C
 export TMPDIR=$3
 
-abun_in=$1
-nthreads=$2
-tmpdir=$3
-bufsize=$4
-refdir=$5
-fwd=$6
-rev=$7
+abun_in=$abundances
+nthreads=$threads
+refdir=$reference
 
-cluster=$(echo $fwd | sed 's/_1[.]fastq[.]gz//g')
 abundance=$(grep "$cluster[[:space:]]" $abun_in | cut -f2)
 
 seqtk_res=$(seqtk fqchk $fwd)
@@ -62,7 +125,7 @@ r2=$rev
 m=$(printf %.0f $(echo "$coverage_final/10 + 2" | bc -l))
 
 clu_sketch=$tmpdir/$cluster".msh"
-mash sketch -p $nthreads -s 10000 -r -m $m -I $cluster -C - -o $clu_sketch $r1 $r2 2> /dev/null
+mash sketch -p $nthreads -s 10000 -r -m $m -I $cluster -C - -o $clu_sketch $r1 $r2 2> $tmpdir/mash_check.log
 
 sorted_ref_info=$tmpdir/ref_info-$RANDOM".sorted.tsv"
 sed '1d' $refdir/ref_info.tsv | sort -T $tmpdir -S $bufsize --parallel=$nthreads > $sorted_ref_info
