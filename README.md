@@ -10,7 +10,6 @@ or R dependencies in the original.
 - seqtk v1.3
 - mash v2.3
 - GNU datamash
-- awk
 
 ## Usage
 ### Set up a set of reference sequences
