@@ -61,7 +61,7 @@ tmpdir=$tmpdir
 
 paths=ref_paths.txt
 cut -f3 $ref_info | sed '1d' > $paths
-mash sketch -p $threads -s 10000 -o ref -l $paths
+mash sketch -p $threads -s 10000 -o ref -l $paths 2> $tmpdir/mash_setup.log
 mash dist -p $threads ref.msh ref.msh | pigz -p 1 > ref_msh_dis.tsv.gz
 
 touch ref_comp.tsv
