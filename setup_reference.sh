@@ -54,6 +54,16 @@ if [ "$verbose" == "true" ]; then
     set -x
 fi
 
+if [ "$verbose" == "true" ]; then
+    set -x
+fi
+
+if command -v pigz > /dev/null; then
+    compress_cmd="pigz -p $threads"
+else
+    compress_cmd="gzip"
+fi
+
 export LC_ALL=C
 export TMPDIR=$tmpdir
 
@@ -62,7 +72,7 @@ tmpdir=$tmpdir
 paths=ref_paths.txt
 cut -f3 $ref_info | sed '1d' > $paths
 mash sketch -p $threads -s 10000 -o ref -l $paths 2> $tmpdir/mash_setup.log
-mash dist -p $threads ref.msh ref.msh | pigz -p 1 > ref_msh_dis.tsv.gz
+mash dist -p $threads ref.msh ref.msh | $compress_cmd > ref_msh_dis.tsv.gz
 
 touch ref_comp.tsv
 touch ref_clu.txt
@@ -131,4 +141,4 @@ cat $tmp_thr \
 rm $sorted_clu_comp
 rm $tmp_thr
 
-pigz --force -p $threads ref_msh_dis_clu.tsv
+$compress_cmd --force ref_msh_dis_clu.tsv
