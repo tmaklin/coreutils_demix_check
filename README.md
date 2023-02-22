@@ -16,9 +16,10 @@ versions should also work.
 
 Run the supplied `install.sh` script to install all of these from
 source (requires a C compiler). After running the script, you will
-need to export the paths to these tools before running the scripts by running
+need to export the paths to these tools by
+running the following command in the directory where simple-demix\_check is installed before running the scripts:
 ```
-export PATH=$PATH:$(pwd)"/"datamash-1.8:$(pwd)"/"seqtk-1.3:$(pwd)"/"mash-Linux64-v2.3
+export PATH=$PATH:$(pwd)
 ```
 
 ## Usage
