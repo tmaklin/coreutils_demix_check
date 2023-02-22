@@ -11,5 +11,6 @@ cd seqtk-1.3
 make
 
 cd ../
+wget https://github.com/marbl/Mash/releases/download/v2.3/mash-Linux64-v2.3.tar
 tar -xf mash-Linux64-v2.3.tar
 
