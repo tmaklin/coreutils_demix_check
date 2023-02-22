@@ -10,12 +10,14 @@ or R dependencies in the original.
 Version numbers are for versions that have been tested. Older or newer
 versions should also work.
 
-- seqtk v1.3
-- mash v2.3
-- datamash v1.8
+- [seqtk](https://github.com/lh3/seqtk) v1.3
+- [mash](https://github.com/marbl/Mash) v2.3
+- [datamash](https://www.gnu.org/software/datamash/) v1.8
 
-Run the supplied `install.sh` script to install all of these from
-source (requires a C compiler). After running the script, you will
+## Installation
+
+If the dependencies are not installed on your system, run the supplied `install.sh` script to install them from
+source (requires a C/C++ compiler). After running the script, you will
 need to export the paths to these tools by
 running the following command in the directory where simple-demix\_check is installed before running the scripts:
 ```
@@ -33,13 +35,8 @@ setup_reference.sh --ref_info ref_info.tsv --threads $nthreads --tmpdir $tmpdir 
 ```
 
 ### Check reads from mGEMS
-```
-abundances=cluster_abundances.txt
-nthreads=4
-memmegas=1024M
-tmpdir=tmp
-ref_dir=setup_reference_output
-forward=reads_1.fastq.gz
+``` abundances=cluster_abundances.txt nthreads=4 memmegas=1024M
+tmpdir=tmp ref_dir=setup_reference_output forward=reads_1.fastq.gz
 reverse=reads_2.fastq.gz
 
 check_reads.sh --abundances $abundances --threads $nthreads --tmpdir $tmpdir --bufsize $memmegas --reference $ref_dir --fwd $forward --rev $reverse
