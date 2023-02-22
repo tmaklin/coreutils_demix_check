@@ -82,7 +82,13 @@ echo -e "id\tcluster" > ref_clu.tsv
 cut -f1,2 $ref_info >> ref_clu.tsv
 cut -f2 $ref_info | sed '1d' > ref_clu.txt
 
-parallel --will-cite -j $threads 'run_seqtk {}' < <(sed '1d' $ref_info) >> ref_comp.tsv
+if command -v parallel > /dev/null; then
+    parallel --will-cite -j $threads 'run_seqtk {}' < <(sed '1d' $ref_info) >> ref_comp.tsv
+else
+    while read line; do
+	run_seqtk "$line"
+    done < <(sed '1d' $ref_info)
+fi
 
 touch ref_clu_comp.tsv
 echo -e "cluster\tn\tlength_ave\tlength_min\tlength_max" > ref_clu_comp.tsv

@@ -9,7 +9,6 @@ or R dependencies in the original.
 ## Dependencies
 - seqtk v1.3
 - mash v2.3
-- GNU Parallel
 - GNU datamash
 - awk
 
