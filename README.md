@@ -19,23 +19,23 @@ or R dependencies in the original.
 ### Set up a set of reference sequences
 ```
 nthreads=4
-memmegas=1024
+memmegas=1024M
 tmpdir=tmp
 
-setup_reference.sh ref_info.tsv $nthreads $tmpdir $memmegas"M"
+setup_reference.sh --ref_info ref_info.tsv --threads $nthreads --tmpdir $tmpdir --bufzie $memmegas
 ```
 
 ### Check reads from mGEMS
 ```
 abundances=cluster_abundances.txt
 nthreads=4
-memmegas=1024
+memmegas=1024M
 tmpdir=tmp
 ref_dir=setup_reference_output
 forward=reads_1.fastq.gz
 reverse=reads_2.fastq.gz
 
-check_reads.sh $abundances $nthreads $tmpdir $memmegas"M" $ref_dir $forward $reverse
+check_reads.sh --abundances $abundances --threads $nthreads --tmpdir $tmpdir --bufsize $memmegas --reference $ref_dir --fwd $forward --rev $reverse
 ```
 
 ## License
