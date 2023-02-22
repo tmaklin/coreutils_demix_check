@@ -92,7 +92,7 @@ total_bases=$(echo $(echo $seqtk_res | grep -o "ALL[[:space:]][0-9]*" | grep -o 
 total_bases=$(( total_bases * 2 )) ## paired-end data
 
 read_len=$(echo $(echo $seqtk_res | grep -o "avg_len:[[:space:]][0-9]*" | grep -o "[0-9]*"))
-read_file_lines=$(zcat --force $fwd | wc -l)
+read_file_lines=$(gunzip -c --force $fwd | wc -l)
 read_count=$(( read_file_lines/4 ))
 
 cluster_avg_len=$(grep "$cluster[[:space:]]" $refdir/ref_clu_comp.tsv | cut -f3)

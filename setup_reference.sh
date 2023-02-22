@@ -82,7 +82,7 @@ sed '1d' ref_comp.tsv | datamash --sort --group 2 count 2 mean 3 min 3 max 3 >> 
 sed '1d' $ref_info | sort --parallel=$threads -S $bufsize -T $tmpdir > ref_info.sorted.tsv
 
 echo -e "ref_id\tmet_id\tdistance\thashes\tss\tp\tref_cluster\tmet_cluster\tcategory" > ref_msh_dis_clu.tsv
-zcat --force ref_msh_dis.tsv.gz \
+gunzip -c --force ref_msh_dis.tsv.gz \
     | awk -F"[\t]" '$1!=$2 { print $0 }' \
     | sort --parallel=$threads -S $bufsize -T $tmpdir -k1 \
     | join -1 1 -2 3 - ref_info.sorted.tsv \

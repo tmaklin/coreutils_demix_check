@@ -12,7 +12,6 @@ or R dependencies in the original.
 - GNU Parallel
 - GNU datamash
 - awk
-- zcat
 - pigz
 
 ## Usage
