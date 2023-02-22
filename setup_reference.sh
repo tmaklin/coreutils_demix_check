@@ -1,15 +1,43 @@
 #!/bin/bash
-## Input: $1: ref_info file (format: tab separated columns ID, cluster, assembly_path).
-##        $2: number of threads
-##        $3: tmp directory
-##        $4: buffer size for `sort`
+## Input:
+##        --ref_info: ref_info file (format: tab separated columns ID, cluster, assembly_path).
+##        --threads: number of threads      (default: 1)
+##        --tmpdir: tmp directory           (default: working directory)
+##        --bufsize: buffer size for `sort` (default: 4000M)
+##        --verbose: echo commands run      (default: silent)
+##        --help: print this message
 
-set -euxo pipefail
+set -euo pipefail
 
-export LC_ALL=C
-export TMPDIR=$3
+arg_parser() {
+    ## Default values
+    ref_info=""   ## Exit if not supplied
+    threads=1     ## 1 thread
+    bufsize=4000"M"  ## 4000MB
+    tmpdir="."    ## Working directory
+    verbose=false ## Silent
 
-tmpdir=$3
+    # Parse values
+    while [ $# -gt 0 ]; do
+        if [[ $1 == *"--"* ]]; then
+	    if [ "$1" == "--verbose" ]; then
+		verbose="true"
+	    elif [ "$1" == "--help" ]; then
+		echo -e "setup_reference.sh:\n\t--ref_info: ref_info file         (format: tab separated columns ID, cluster, assembly_path).\n\t--threads: number of threads      (default: 1)\n\t--tmpdir: tmp directory           (default: working directory)\n\t--bufsize: buffer size for sort   (default: 4000M)\n\t--verbose: echo commands run      (default: silent)\n\t--help: print this message"
+		exit 0
+	    else
+		param="${1/--/}"
+		declare -g $param="$2"
+	    fi
+        fi
+        shift
+    done
+
+    if [ "$ref_info" == "" ]; then
+	echo "--ref_info was not supplied!"
+	exit 1
+    fi
+}
 
 run_seqtk() {
     line=$1
@@ -20,34 +48,45 @@ run_seqtk() {
 }
 export -f run_seqtk
 
+arg_parser $@
+
+if [ "$verbose" == "true" ]; then
+    set -x
+fi
+
+export LC_ALL=C
+export TMPDIR=$tmpdir
+
+tmpdir=$tmpdir
+
 paths=ref_paths.txt
-cut -f3 $1 | sed '1d' > $paths
-mash sketch -p $2 -s 10000 -o ref -l $paths 2> /dev/null
-mash dist -p $2 ref.msh ref.msh | pigz -p 1 > ref_msh_dis.tsv.gz
+cut -f3 $ref_info | sed '1d' > $paths
+mash sketch -p $threads -s 10000 -o ref -l $paths
+mash dist -p $threads ref.msh ref.msh | pigz -p 1 > ref_msh_dis.tsv.gz
 
 touch ref_comp.tsv
 touch ref_clu.txt
 touch ref_clu.tsv
 echo -e "chr\tcluster\tlength\t#A\t#C\t#G\t#T\t#2\t#3\t#4\t#CpG\t#tv\t#ts\t#CpG-ts" > ref_comp.tsv
 echo -e "id\tcluster" > ref_clu.tsv
-cut -f1,2 $1 >> ref_clu.tsv
-cut -f2 $1 | sed '1d' > ref_clu.txt
+cut -f1,2 $ref_info >> ref_clu.tsv
+cut -f2 $ref_info | sed '1d' > ref_clu.txt
 
-parallel --will-cite -j $2 'run_seqtk {}' < <(sed '1d' $1) >> ref_comp.tsv
+parallel --will-cite -j $threads 'run_seqtk {}' < <(sed '1d' $ref_info) >> ref_comp.tsv
 
 touch ref_clu_comp.tsv
 echo -e "cluster\tn\tlength_ave\tlength_min\tlength_max" > ref_clu_comp.tsv
 sed '1d' ref_comp.tsv | datamash --sort --group 2 count 2 mean 3 min 3 max 3 >> ref_clu_comp.tsv
 
 ## Sort the ref info for `join`
-sed '1d' $1 | sort --parallel=$2 -S $4 -T $tmpdir > ref_info.sorted.tsv
+sed '1d' $ref_info | sort --parallel=$threads -S $bufsize -T $tmpdir > ref_info.sorted.tsv
 
 echo -e "ref_id\tmet_id\tdistance\thashes\tss\tp\tref_cluster\tmet_cluster\tcategory" > ref_msh_dis_clu.tsv
 zcat --force ref_msh_dis.tsv.gz \
     | awk -F"[\t]" '$1!=$2 { print $0 }' \
-    | sort --parallel=$2 -S $4 -T $tmpdir -k1 \
+    | sort --parallel=$threads -S $bufsize -T $tmpdir -k1 \
     | join -1 1 -2 3 - ref_info.sorted.tsv \
-    | tr ' ' '\t' | sort --parallel=$2 -S $4 -T $tmpdir -k2 \
+    | tr ' ' '\t' | sort --parallel=$threads -S $bufsize -T $tmpdir -k2 \
     | join -1 2 -2 3 - ref_info.sorted.tsv \
     | tr ' ' '\t' \
     | sed 's/\([0-9][0-9]*\)[/]\([0-9][0-9]*\)/\1\t\2/g' \
@@ -67,7 +106,7 @@ tmp_thr=$tmpdir/tmp_clu_thr-$RANDOM".tsv"
 cat ref_msh_dis_clu.tsv | sed '1d' \
     | awk -F"[\t]" '$7!=$8 { print $0 }' \
     | datamash --sort --group 7 median 3 min 3 max 3\
-    | join -a 1 -o 1.1,1.2,1.3,1.4,2.2,2.3,2.4 -e 0 - $within_dis | tr ' ' '\t' | sort --parallel=$2 -S $4 -T $tmpdir -k1 \
+    | join -a 1 -o 1.1,1.2,1.3,1.4,2.2,2.3,2.4 -e 0 - $within_dis | tr ' ' '\t' | sort --parallel=$threads -S $bufsize -T $tmpdir -k1 \
     | awk -v SF="0.20" '{printf($1"\t"$2"\t"$3"\t"$4"\t"$5"\t"$6"\t"$7"\t"$7*(1 + SF))"\n" }' > $tmp_thr
 
 t_min=$(cut -f2 $tmp_thr | awk -v SF="0.20" '{printf($1*SF)"\n" }' | datamash --sort median 1)
@@ -79,7 +118,7 @@ else
 fi
 
 sorted_clu_comp=$tmpdir/sorted_clu_comp.tsv
-sed '1d' ref_clu_comp.tsv | sort --parallel=$2 -S $4 -T $tmpdir > $sorted_clu_comp
+sed '1d' ref_clu_comp.tsv | sort --parallel=$threads -S $bufsize -T $tmpdir > $sorted_clu_comp
 echo -e "cluster\tn\tthreshold\tdis_same_max\tdis_same_med_all\tdis_diff_med_all" > ref_clu_thr.tsv
 cat $tmp_thr \
     | paste - <(cut -f8 $tmp_thr | awk -v SF="$t_comp" '{print ($1 < SF ? SF:$1) }') \
@@ -92,4 +131,4 @@ cat $tmp_thr \
 rm $sorted_clu_comp
 rm $tmp_thr
 
-pigz --force -p $2 ref_msh_dis_clu.tsv
+pigz --force -p $threads ref_msh_dis_clu.tsv
