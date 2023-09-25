@@ -31,7 +31,7 @@ nthreads=4
 memmegas=1024M
 tmpdir=tmp
 
-setup_reference.sh --ref_info ref_info.tsv --threads $nthreads --tmpdir $tmpdir --bufzie $memmegas
+setup_reference.sh --ref_info ref_info.tsv --threads $nthreads --tmpdir $tmpdir --bufsize $memmegas
 ```
 
 ### Check reads from mGEMS
