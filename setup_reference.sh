@@ -9,6 +9,9 @@
 
 set -euo pipefail
 
+export LOCALE=C
+export LANG=C
+
 arg_parser() {
     ## Default values
     ref_info=""   ## Exit if not supplied
@@ -95,7 +98,7 @@ echo -e "cluster\tn\tlength_ave\tlength_min\tlength_max" > ref_clu_comp.tsv
 sed '1d' ref_comp.tsv | datamash --sort --group 2 count 2 mean 3 min 3 max 3 >> ref_clu_comp.tsv
 
 ## Sort the ref info for `join`
-sed '1d' $ref_info | sort --parallel=$threads -S $bufsize -T $tmpdir > ref_info.sorted.tsv
+sed '1d' $ref_info | sort --parallel=$threads -S $bufsize -T $tmpdir -k3 > ref_info.sorted.tsv
 
 echo -e "ref_id\tmet_id\tdistance\thashes\tss\tp\tref_cluster\tmet_cluster\tcategory" > ref_msh_dis_clu.tsv
 gunzip -c --force ref_msh_dis.tsv.gz \
