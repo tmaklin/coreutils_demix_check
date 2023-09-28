@@ -106,8 +106,6 @@ coverage=$(printf %.2f $(echo "$total_bases/$cluster_avg_len" | bc -l))
 coverage_final=$coverage
 
 if (( $(echo "$coverage > 100" | bc -l) )); then
-    echo "subsampling"
-
     r1=$tmpdir/$cluster"_subsampled_1.fastq.gz"
     r2=$tmpdir/$cluster"_subsampled_2.fastq.gz"
 
@@ -165,10 +163,10 @@ fi
 
 echo -e $cluster'\t'$abundance'\t'$cluster_avg_len'\t'$score'\t'$read_count'\t'$total_bases'\t'$coverage'\t'$subsampled'\t'$coverage_final'\t'$notes
 
-if (( $(echo "$subsampled" | bc -l) )); then
-    rm $r1
-    rm $r2
-fi
+## if (( $(echo "$subsampled" | bc -l) )); then
+    ## rm $r1
+    ## rm $r2
+## fi
 
 rm $clu_sketch
 rm $sorted_ref_info
