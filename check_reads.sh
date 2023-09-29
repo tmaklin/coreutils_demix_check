@@ -90,7 +90,7 @@ abun_in=$abundances
 nthreads=$threads
 refdir=$reference
 
-abundance=$(grep "$cluster[[:space:]]" $abun_in | cut -f2)
+abundance=$(grep "^$cluster[[:space:]]" $abun_in | cut -f2)
 
 seqtk_res=$(seqtk fqchk $fwd)
 
@@ -101,7 +101,7 @@ read_len=$(echo $(echo $seqtk_res | grep -o "avg_len:[[:space:]][0-9]*" | grep -
 read_file_lines=$(gunzip -c --force $fwd | wc -l)
 read_count=$(( read_file_lines/4 ))
 
-cluster_avg_len=$(grep "$cluster[[:space:]]" $refdir/ref_clu_comp.tsv | cut -f3)
+cluster_avg_len=$(grep "^$cluster[[:space:]]" $refdir/ref_clu_comp.tsv | cut -f3)
 coverage=$(printf %.2f $(echo "$total_bases/$cluster_avg_len" | bc -l))
 coverage_final=$coverage
 
@@ -136,13 +136,13 @@ sed '1d' $refdir/ref_info.tsv | sort -T $tmpdir -S $bufsize --parallel=$nthreads
 dist_res=$(mash dist -p $nthreads $refdir/ref.msh $clu_sketch \
 	       | sort -T $tmpdir -S $bufsize --parallel=$nthreads \
 	       | join -1 1 -2 3 - $sorted_ref_info \
-	       | grep "$cluster$" \
+	       | grep "[[:space:]]$cluster$" \
 	       | datamash min 3 median 3 -t ' ')
 
 mindis=$(echo $dist_res | cut -f1 -d' ')
 meddis=$(echo $dist_res | cut -f2 -d' ')
 
-clu_info=$(grep "$cluster[[:space:]]" $refdir"/ref_clu_thr.tsv")
+clu_info=$(grep "^$cluster[[:space:]]" $refdir"/ref_clu_thr.tsv")
 clu_thr=$(echo $clu_info | cut -f3 -d ' ')
 clu_dis_same_max=$(echo $clu_info | cut -f4 -d' ')
 clu_dis_same_med_all=$(echo $clu_info | cut -f5 -d' ')
