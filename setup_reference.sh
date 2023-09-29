@@ -108,7 +108,8 @@ gunzip -c --force ref_msh_dis.tsv.gz \
     | tr ' ' '\t' | sort --parallel=$threads -S $bufsize -T $tmpdir -k2 \
     | join -1 2 -2 3 - ref_info.sorted.tsv \
     | tr ' ' '\t' \
-    | sed 's/\([0-9][0-9]*\)[/]\([0-9][0-9]*\)/\1\t\2/g' \
+    | awk -F "\t" 'sub("/", " ", $5)' \
+    | tr ' ' '\t' \
     | awk '{ print $9 "\t" $7 "\t" $3 "\t" $5 "\t" $6 "\t" $4 "\t" $10 "\t" $8}' \
     | awk -F"[\t]" '{print $0, "\t" ($7==$8?"same":"different") "_cluster"}' \
     | tr -d ' ' \
