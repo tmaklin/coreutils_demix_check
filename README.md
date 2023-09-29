@@ -35,11 +35,13 @@ setup_reference.sh --ref_info ref_info.tsv --threads $nthreads --tmpdir $tmpdir 
 ```
 
 ### Check reads from mGEMS
-``` abundances=cluster_abundances.txt nthreads=4 memmegas=1024M
+```
+cluster_name=lineage-0
+abundances=cluster_abundances.txt nthreads=4 memmegas=1024M
 tmpdir=tmp ref_dir=setup_reference_output forward=reads_1.fastq.gz
 reverse=reads_2.fastq.gz
 
-check_reads.sh --abundances $abundances --threads $nthreads --tmpdir $tmpdir --bufsize $memmegas --reference $ref_dir --fwd $forward --rev $reverse
+check_reads.sh --cluster $cluster_name --abundances $abundances --threads $nthreads --tmpdir $tmpdir --bufsize $memmegas --reference $ref_dir --fwd $forward --rev $reverse
 ```
 
 ## License
