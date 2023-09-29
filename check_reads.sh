@@ -108,6 +108,8 @@ coverage_final=$coverage
 if (( $(echo "$coverage > 100" | bc -l) )); then
     r1=$tmpdir/$cluster"_subsampled_1.fastq.gz"
     r2=$tmpdir/$cluster"_subsampled_2.fastq.gz"
+    subsampled_r1=$tmpdir/$cluster"_subsampled_1.fastq.gz"
+    subsampled_r2=$tmpdir/$cluster"_subsampled_2.fastq.gz"
 
     sub_read_count=$( echo "$read_count/($coverage/100)" | bc -l | sed 's/[.][0-9]*$//g')
     seqtk sample -s 11 $fwd $sub_read_count | $compress_cmd > $r1
@@ -163,10 +165,10 @@ fi
 
 echo -e $cluster'\t'$abundance'\t'$cluster_avg_len'\t'$score'\t'$read_count'\t'$total_bases'\t'$coverage'\t'$subsampled'\t'$coverage_final'\t'$notes
 
-## if (( $(echo "$subsampled" | bc -l) )); then
-    ## rm $r1
-    ## rm $r2
-## fi
+if (( $(echo "$subsampled" | bc -l) )); then
+    rm $subsampled_r1
+    rm $subsampled_r2
+fi
 
 rm $clu_sketch
 rm $sorted_ref_info
