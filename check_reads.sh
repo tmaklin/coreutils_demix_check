@@ -134,9 +134,9 @@ clu_sketch=$tmpdir/$cluster".msh"
 mash sketch -p $nthreads -s 10000 -r -m $m -I $cluster -C - -o $clu_sketch $r1 $r2 2> $tmpdir/mash_check.log
 
 sorted_ref_info=$tmpdir/ref_info-$RANDOM".sorted.tsv"
-sed '1d' $refdir/ref_info.tsv | sort -T $tmpdir -S $bufsize --parallel=$nthreads > $sorted_ref_info
+sed '1d' $refdir/ref_info.tsv | sort -T $tmpdir -S $bufsize --parallel=$nthreads -k 3 > $sorted_ref_info
 dist_res=$(mash dist -p $nthreads $refdir/ref.msh $clu_sketch \
-	       | sort -T $tmpdir -S $bufsize --parallel=$nthreads \
+	       | sort -T $tmpdir -S $bufsize --parallel=$nthreads -k 1 \
 	       | join -1 1 -2 3 - $sorted_ref_info \
 	       | grep "[[:space:]]$cluster$" \
 	       | datamash min 3 median 3 -t ' ')
