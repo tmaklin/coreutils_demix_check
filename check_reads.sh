@@ -141,17 +141,17 @@ dist_res=$(mash dist -p $nthreads $refdir/ref.msh $clu_sketch \
 	       | grep "[[:space:]]$cluster$" \
 	       | datamash min 3 median 3 -t ' ')
 
-mindis=$(echo $dist_res | cut -f1 -d' ')
-meddis=$(echo $dist_res | cut -f2 -d' ')
+mindis=$(echo $dist_res | cut -f1 -d' ' | awk -F"E" 'BEGIN{OFMT="%10.10f"} {print $1 * (10 ^ $2)}')
+meddis=$(echo $dist_res | cut -f2 -d' ' | awk -F"E" 'BEGIN{OFMT="%10.10f"} {print $1 * (10 ^ $2)}')
 
 clu_info=$(grep "^$cluster[[:space:]]" $refdir"/ref_clu_thr.tsv")
-clu_thr=$(echo $clu_info | cut -f3 -d ' ')
-clu_dis_same_max=$(echo $clu_info | cut -f4 -d' ')
-clu_dis_same_med_all=$(echo $clu_info | cut -f5 -d' ')
-clu_dis_diff_med_all=$(echo $clu_info | cut -f6 -d' ')
+clu_thr=$(echo $clu_info | cut -f3 -d ' ' | awk -F"E" 'BEGIN{OFMT="%10.10f"} {print $1 * (10 ^ $2)}')
+clu_dis_same_max=$(echo $clu_info | cut -f4 -d' ' | awk -F"E" 'BEGIN{OFMT="%10.10f"} {print $1 * (10 ^ $2)}')
+clu_dis_same_med_all=$(echo $clu_info | cut -f5 -d' ' | awk -F"E" 'BEGIN{OFMT="%10.10f"} {print $1 * (10 ^ $2)}')
+clu_dis_diff_med_all=$(echo $clu_info | cut -f6 -d' ' | awk -F"E" 'BEGIN{OFMT="%10.10f"} {print $1 * (10 ^ $2)}')
 
-med_vs_same=$(echo "$meddis - $clu_dis_same_med_all" | bc -l)
-med_vs_diff=$(echo "$meddis - $clu_dis_diff_med_all" | bc -l)
+med_vs_same=$(echo "$meddis - $clu_dis_same_med_all" | bc -l | awk -F"E" 'BEGIN{OFMT="%10.10f"} {print $1 * (10 ^ $2)}')
+med_vs_diff=$(echo "$meddis - $clu_dis_diff_med_all" | bc -l | awk -F"E" 'BEGIN{OFMT="%10.10f"} {print $1 * (10 ^ $2)}')
 
 if (( $(echo "$mindis < $clu_dis_same_max" | bc -l) )); then
     score="1"
