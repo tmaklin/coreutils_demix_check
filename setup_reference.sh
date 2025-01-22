@@ -72,10 +72,9 @@ export TMPDIR=$tmpdir
 
 tmpdir=$tmpdir
 
-paths=ref_paths.txt
-cut -f3 $ref_info | sed '1d' > $paths
-mash sketch -p $threads -s 10000 -o ref -l $paths 2> $tmpdir/mash_setup.log
-mash dist -p $threads ref.msh ref.msh | $compress_cmd > ref_msh_dis.tsv.gz
+cut -f1,3 $ref_info | sed '1d' > sketchlib_input.tsv
+sketchlib sketch -o ref_sketch -k 21,31,51,71 -s 10000 --threads $threads -f sketchlib_input.tsv 2> $tmpdir/sketchlib_sketch.log
+sketchlib dist --ani -k 21 --threads $threads ref_sketch 2> $tmpdir/sketchlib_dist.log | $compress_cmd > ref_msh_dis.tsv.gz
 
 touch ref_comp.tsv
 touch ref_clu.txt
@@ -98,19 +97,18 @@ echo -e "cluster\tn\tlength_ave\tlength_min\tlength_max" > ref_clu_comp.tsv
 sed '1d' ref_comp.tsv | datamash --sort --group 2 count 2 mean 3 min 3 max 3 >> ref_clu_comp.tsv
 
 ## Sort the ref info for `join`
-sed '1d' $ref_info | sort --parallel=$threads -S $bufsize -T $tmpdir -k3 > ref_info.sorted.tsv
+sed '1d' $ref_info | sort --parallel=$threads -S $bufsize -T $tmpdir -k1,1 > ref_info.sorted.tsv
 
 echo -e "ref_id\tmet_id\tdistance\thashes\tss\tp\tref_cluster\tmet_cluster\tcategory" > ref_msh_dis_clu.tsv
 gunzip -c --force ref_msh_dis.tsv.gz \
+    | awk '{printf($1"\t"$2"\t"1 - $3"\t"1 - $3"\t"1 - $3"\n") }' \
     | awk -F"[\t]" '$1!=$2 { print $0 }' \
-    | sort --parallel=$threads -S $bufsize -T $tmpdir -k1 \
-    | join -1 1 -2 3 - ref_info.sorted.tsv \
-    | tr ' ' '\t' | sort --parallel=$threads -S $bufsize -T $tmpdir -k2 \
-    | join -1 2 -2 3 - ref_info.sorted.tsv \
+    | sort --parallel=$threads -S $bufsize -T $tmpdir -k1,1 \
+    | join -1 1 -2 1 - ref_info.sorted.tsv \
+    | tr ' ' '\t' | sort --parallel=$threads -S $bufsize -T $tmpdir -k2,2 \
+    | join -1 2 -2 1 - ref_info.sorted.tsv \
     | tr ' ' '\t' \
-    | awk -F "\t" 'sub("/", " ", $5)' \
-    | tr ' ' '\t' \
-    | awk '{ print $9 "\t" $7 "\t" $3 "\t" $5 "\t" $6 "\t" $4 "\t" $10 "\t" $8}' \
+    | awk '{ print $1 "\t" $2 "\t" $3 "\t" $4 "\t" $5 "\t" $5 "\t" $6 "\t" $8}' \
     | awk -F"[\t]" '{print $0, "\t" ($7==$8?"same":"different") "_cluster"}' \
     | tr -d ' ' \
     | sed 's/_cluster/ cluster/g' >> ref_msh_dis_clu.tsv

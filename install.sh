@@ -22,19 +22,15 @@ seqtk_path=$(pwd)"/"seqtk
 
 cd ../
 
-## Downlaod mash v2.3 binary for Linux or MacOS depending on system
-if [[ "$OSTYPE" == "linux-gnu"* ]]; then
-    wget https://github.com/marbl/Mash/releases/download/v2.3/mash-Linux64-v2.3.tar
-    tar -xf mash-Linux64-v2.3.tar
-    mash_path=$(pwd)"/mash-Linux64-v2.3/mash"
-elif [[ "$OSTYPE" == "darwin"* ]]; then
-    wget https://github.com/marbl/Mash/releases/download/v2.3/mash-OSX64-v2.3.tar
-    tar -xf mash-OSX64-v2.3.tar
-    mash_path=$(pwd)"/mash-OSX64-v2.3/mash"
-fi
+## Compile sketchlib from source
+git clone https://github.com/bacpop/sketchlib.rust
+cd sketchlib.rust
+git checkout 37a5879
+cargo build --release
+sketchlib_path=$(pwd)"/target/release/sketchlib"
 
 ## Setup symlinks in root directory
 cd ../
-ln -s $mash_path $path"/"mash
+ln -s $sketchlib_path $path"/"sketchlib
 ln -s $datamash_path $path"/"datamash
 ln -s $seqtk_path $path"/"seqtk

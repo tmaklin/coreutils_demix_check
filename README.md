@@ -11,7 +11,7 @@ Version numbers are for versions that have been tested. Older or newer
 versions should also work.
 
 - [seqtk](https://github.com/lh3/seqtk) v1.3
-- [mash](https://github.com/marbl/Mash) v2.3
+- [sketchlib](https://github.com/bacpop/sketchlib.rust) 37a5879
 - [datamash](https://www.gnu.org/software/datamash/) v1.8
 
 ## Installation
